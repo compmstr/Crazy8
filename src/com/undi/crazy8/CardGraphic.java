@@ -62,12 +62,17 @@ public class CardGraphic {
 		cardBack = Bitmap.createScaledBitmap(raw, cardWidth, cardHeight, false);
 	}
 	
-	public void drawCardBack(Canvas canvas, float percentX, float percentY){
+	public void drawCardBackPercent(Canvas canvas, float percentX, float percentY){
 		if(cardBack != null){
 			canvas.drawBitmap(cardBack, percentX * screenW, percentY * screenH, null);
 		}
 	}
-	public void drawCard(Canvas canvas, CardRef ref, float percentX, float percentY){
+	public void drawCardBack(Canvas canvas, int x, int y){
+		if(cardBack != null){
+			canvas.drawBitmap(cardBack, x, y, null);
+		}
+	}
+	public void drawCardPercent(Canvas canvas, CardRef ref, float percentX, float percentY){
 		if(cardFaces != null){
 			destRect.left = (int) (percentX * screenW);
 			destRect.right = destRect.left + cardWidth;
@@ -80,8 +85,23 @@ public class CardGraphic {
 			canvas.drawBitmap(cardFaces, srcRect, destRect, null);
 		}
 	}
+	public void drawCard(Canvas canvas, CardRef ref, int x, int y){
+		if(cardFaces != null){
+			destRect.left = x;
+			destRect.right = x + cardWidth;
+			destRect.top = y;
+			destRect.bottom = y + cardHeight;
+			srcRect.left = ref.getRankNum() * cardWidth;
+			srcRect.right = srcRect.left + cardWidth;
+			srcRect.top = ref.getSuitNum() * cardHeight;
+			srcRect.bottom = srcRect.top + cardHeight;
+			canvas.drawBitmap(cardFaces, srcRect, destRect, null);
+		}
+	}
 
 	public float getCardHeightPercent(){
 		return (float)cardHeight / screenH;
 	}
+	public int getCardWidth(){ return cardWidth; }
+	public int getCardHeight(){ return cardHeight; }
 }
