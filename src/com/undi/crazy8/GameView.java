@@ -322,18 +322,20 @@ public class GameView extends View {
 				break;
 			case MotionEvent.ACTION_UP:
 				if(game.isPlayerTurn()){
-					if(isNearCenter(x, y) && movingCardIdx != -1){
-						CardRef card = game.getPlayerHand().get(movingCardIdx);
-						if(game.playCard(game.getPlayerHand(), card)){
-							//move successful
-							if(card.rank == Rank.EIGHT && !game.isGameOver()){
-								showChooseSuitDialog();
+					if(movingCardIdx != -1){
+						if(isNearCenter(x, y)){
+							CardRef card = game.getPlayerHand().get(movingCardIdx);
+							if(game.playCard(game.getPlayerHand(), card)){
+								//move successful
+								if(card.rank == Rank.EIGHT && !game.isGameOver()){
+									showChooseSuitDialog();
+								}
+							}else{
+								animateMovingCardBack(card, x, y);
 							}
 						}else{
-							animateMovingCardBack(card, x, y);
+							animateMovingCardBack(x, y);
 						}
-					}else{
-						animateMovingCardBack(x, y);
 					}
 				}
 				nextCardButton.checkReleased(x, y);

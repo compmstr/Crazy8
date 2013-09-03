@@ -1,8 +1,8 @@
 Computer play animation appears to run multiple times
 Computer play animation doesn't seem to run on first move
   *now does animation, but starts it on construction, animation runs out before display*
-I got a crash while returning a card to my hand without playing it (only seen once so far)
 
 FIXED:
 Still picking suit if going out with an 8
 Need to animate not playing card (not just invalid move)
+Crash when releasing touch when not dragging card
