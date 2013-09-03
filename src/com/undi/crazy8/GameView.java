@@ -1,7 +1,6 @@
 package com.undi.crazy8;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 import com.undi.crazy8.CardRef.Rank;
@@ -10,12 +9,12 @@ import com.undi.crazy8.ui.UICallback;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.pm.FeatureInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -26,7 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class GameView extends View {
-	private CardGraphic cardGraphic;
+	private AnimatedCardGraphic cardGraphic;
 	private UIButton nextCardButton;
 	private Context context;
 	private float scale;
@@ -36,10 +35,13 @@ public class GameView extends View {
 	private int movingCardIdx = -1;
 	private int movingCardX, movingCardY;
 	Dialog endHandDialog = null;
+	private boolean showingChooseSuit = false;
 	
 	public GameView(Context context) {
 		super(context);
 		this.context = context;
+		
+		cardGraphic = new AnimatedCardGraphic(this.context, 0.1f);
 		
 		scale = context.getResources().getDisplayMetrics().scaledDensity;
 		whitePaint = new Paint();
@@ -66,6 +68,20 @@ public class GameView extends View {
 		//CardMgr.reshuffle(game.getDeck(), game.getPlayerHand());
 	}
 	
+	private int getPlayerCardDrawX(int idx){
+		return 5 + (cardGraphic.getCardWidth() + 5) * idx;
+	}
+	private int getPlayerCardDrawY(){
+		return (int) (screenH - cardGraphic.getCardHeight() - whitePaint.getTextSize() - (50 * scale));
+	}
+	
+	private int getOpponentCardDrawY(){
+		return (int) (whitePaint.getTextSize() + (50 * scale));
+	}
+	private int getOpponentCardDrawX(){
+		return 5;
+	}
+	
 	@Override
 	protected void onDraw(Canvas canvas){
 		canvas.drawText("Player Score: " + Integer.toString(game.getPlayerScore()), 10, 
@@ -74,24 +90,22 @@ public class GameView extends View {
 				whitePaint.getTextSize() + 10 , whitePaint);
 		
 		//draw the player's hand
-		int drawX = 5;
-		int drawY = (int) (screenH - cardGraphic.getCardHeight() - whitePaint.getTextSize() - (50 * scale));
+		int drawY = getPlayerCardDrawY();
 		List<CardRef> playerHand = game.getPlayerHand();
 		int cardsToDraw = Math.min(7, playerHand.size());
 		for(int i = 0; i < cardsToDraw; i++){
 			if(i != movingCardIdx){
 				CardRef card = playerHand.get(i);
-				cardGraphic.drawCard(canvas, card, drawX, drawY);
+				cardGraphic.drawCard(canvas, card, getPlayerCardDrawX(i), drawY);
 			}
-			drawX += cardGraphic.getCardWidth() + 5;
 		}
 		if(playerHand.size() > 7){
 			nextCardButton.draw(canvas);
 		}
 
 		//draw the opponent's hand
-		drawX = 5;
-		drawY = (int) (whitePaint.getTextSize() + (50 * scale));
+		int drawX = getOpponentCardDrawX();
+		drawY = getOpponentCardDrawY();
 		cardsToDraw = game.getOppHand().size();
 		for(int i = 0; i < cardsToDraw; i++){
 			cardGraphic.drawCardBack(canvas, drawX, drawY);
@@ -110,6 +124,9 @@ public class GameView extends View {
 			cardGraphic.drawCard(canvas, game.getDiscardPile().get(0), drawX, drawY);
 		}
 		
+		//Draw the animations
+		cardGraphic.drawAnimations(canvas, this);
+		
 		//Draw the moving card
 		if(movingCardIdx != -1){
 			cardGraphic.drawCard(canvas, game.getPlayerHand().get(movingCardIdx), 
@@ -121,9 +138,6 @@ public class GameView extends View {
 	
 	@Override
 	public void onSizeChanged(int w, int h, int oldw, int oldh){
-		if(cardGraphic == null){
-			cardGraphic = CardGraphic.getInstance(this.context, 0.1f);
-		}
 		nextCardButton.rescaleGraphic(w, h);
 		cardGraphic.onResize(w, h);
 		screenH = h;
@@ -168,14 +182,18 @@ public class GameView extends View {
 					selectedSuit = CardRef.Suit.valueOf(CardRef.Suit.class, selectedSuitName.toString().toUpperCase());
 				}catch(IllegalArgumentException e){ }
 				if(selectedSuit != null){
+					showingChooseSuit = false;
 					chooseSuitDialog.dismiss();
 					Toast.makeText(context, "You Chose: " + selectedSuit.toString(), Toast.LENGTH_SHORT).show();
 					game.setWildSuit(selectedSuit);
+					//Display the computer's turn
+					showComputerTurn();
 				}else{
 					Toast.makeText(context, "Error selecting suit... " + selectedSuitName.toString(), Toast.LENGTH_SHORT).show();
 				}
 			}
 		});
+		showingChooseSuit = true;
 		chooseSuitDialog.show();
 	}
 	
@@ -212,6 +230,43 @@ public class GameView extends View {
 		});
 		endHandDialog.show();
 	}
+	
+	/**
+	 * Run the computer's turn, flag a redraw, and
+	 * show endHand if needed
+	 */
+	private Runnable doComputerTurn = new Runnable() {
+		@Override
+		public void run() {
+			game.runComputerTurn();
+			invalidate();
+			if(game.isGameOver() && endHandDialog == null){
+				endHand();
+			}
+		}
+	};
+	
+	/**
+	 * Displays an animation of the computer's turn, providing a callback to
+	 *   doComputerTurn
+	 */
+	private void showComputerTurn(){
+		CardRef computerCard = game.getComputerPlay();
+		if(computerCard != null){
+			//Show computer playing card
+			cardGraphic.animateCardBack(
+					new Point(getOpponentCardDrawX(), getOpponentCardDrawY()),
+					new Point(screenW / 2, screenH / 2),
+					200, doComputerTurn);
+		}else{
+			//Show computer drawing card
+			cardGraphic.animateCardBack(
+					new Point(screenW / 2, screenH / 2),
+					new Point(getOpponentCardDrawX(), getOpponentCardDrawY()),
+					200, doComputerTurn);
+		}
+		invalidate();
+	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent evt){
@@ -219,46 +274,70 @@ public class GameView extends View {
 		int x = (int)evt.getX();
 		int y = (int)evt.getY();
 		
-		switch(eventAction){
-		case MotionEvent.ACTION_DOWN:
-			nextCardButton.checkPressed(x, y);
-			if(game.isPlayerTurn()){
-				movingCardIdx = playerCardAtLocation(x, y);
-				movingCardX = x;
-				movingCardY = y;
-				if(isNearCenter(x, y)){
-					if(game.hasValidMove(game.getPlayerHand())){
-						Toast.makeText(context, "You cannot draw if you have a valid move", Toast.LENGTH_SHORT).show();
-					}else{
-						game.drawCard(game.getPlayerHand());
-						game.changeTurn();
-					}
-				}
-			}
-			break;
-		case MotionEvent.ACTION_MOVE:
-			movingCardX = x;
-			movingCardY = y;
-			nextCardButton.checkPressed(x, y);
-			break;
-		case MotionEvent.ACTION_UP:
-			if(game.isPlayerTurn()){
-				if(isNearCenter(x, y) && movingCardIdx != -1){
-					CardRef card = game.getPlayerHand().get(movingCardIdx);
-					if(game.playCard(game.getPlayerHand(), card)){
-						//move successful
-						if(card.rank == Rank.EIGHT){
-							showChooseSuitDialog();
+		//Make sure player isn't playing while animations are
+		if(!cardGraphic.isAnimationRunning()){
+			switch(eventAction){
+			case MotionEvent.ACTION_DOWN:
+				nextCardButton.checkPressed(x, y);
+				if(game.isPlayerTurn()){
+					movingCardIdx = playerCardAtLocation(x, y);
+					movingCardX = x;
+					movingCardY = y;
+					if(isNearCenter(x, y)){
+						if(game.hasValidMove(game.getPlayerHand())){
+							Toast.makeText(context, "You cannot draw if you have a valid move", Toast.LENGTH_SHORT).show();
+						}else{
+							game.drawCard(game.getPlayerHand());
+							game.changeTurn();
 						}
 					}
 				}
+				break;
+			case MotionEvent.ACTION_MOVE:
+				movingCardX = x;
+				movingCardY = y;
+				nextCardButton.checkPressed(x, y);
+				break;
+			case MotionEvent.ACTION_UP:
+				if(game.isPlayerTurn()){
+					if(isNearCenter(x, y) && movingCardIdx != -1){
+						CardRef card = game.getPlayerHand().get(movingCardIdx);
+						if(game.playCard(game.getPlayerHand(), card)){
+							//move successful
+							if(card.rank == Rank.EIGHT){
+								showChooseSuitDialog();
+							}
+						}else{
+							//Move the moving card graphic off screen
+							movingCardX = -1000;
+							Point to = new Point(getPlayerCardDrawX(movingCardIdx),
+										getPlayerCardDrawY());
+							cardGraphic.animateCard(card, new Point(x, y), to, 100,
+									new Runnable() {
+										@Override
+										public void run() {
+											movingCardIdx = -1;
+											invalidate();
+										}
+									});
+						}
+					}
+				}
+				nextCardButton.checkReleased(x, y);
+				if(!cardGraphic.isAnimationRunning()){
+					movingCardIdx = -1;
+				}
+				break;
 			}
-			nextCardButton.checkReleased(x, y);
-			movingCardIdx = -1;
-			break;
 		}
 		if(game.isGameOver() && endHandDialog == null){
 			endHand();
+		}
+		//Show the computer's turn if we're not choosing a suit
+		if(!game.isGameOver() &&
+			!game.isPlayerTurn() &&
+			!showingChooseSuit){
+			showComputerTurn();
 		}
 		
 		invalidate();

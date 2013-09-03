@@ -19,20 +19,12 @@ public class CardGraphic {
 	private int cardHeight;
 	private Rect srcRect = new Rect();
 	private Rect destRect = new Rect();
-	private static CardGraphic _instance = null;
 	private Context context;
 	private int screenW, screenH;
 	
-	private CardGraphic(Context context, float cardWidthPercent){
+	public CardGraphic(Context context, float cardWidthPercent){
 		this.cardWidthPercent = cardWidthPercent;
 		this.context = context;
-	}
-	
-	public static CardGraphic getInstance(Context context, float cardWidthPercent){
-		if(_instance == null){
-			_instance = new CardGraphic(context, cardWidthPercent);
-		}
-		return _instance;
 	}
 	
 	/**
@@ -73,29 +65,37 @@ public class CardGraphic {
 		}
 	}
 	public void drawCardPercent(Canvas canvas, CardRef ref, float percentX, float percentY){
-		if(cardFaces != null){
-			destRect.left = (int) (percentX * screenW);
-			destRect.right = destRect.left + cardWidth;
-			destRect.top = (int) (percentY * screenH);
-			destRect.bottom = destRect.top + cardHeight;
-			srcRect.left = ref.getRankNum() * cardWidth;
-			srcRect.right = srcRect.left + cardWidth;
-			srcRect.top = ref.getSuitNum() * cardHeight;
-			srcRect.bottom = srcRect.top + cardHeight;
-			canvas.drawBitmap(cardFaces, srcRect, destRect, null);
+		if(ref == CardRef.CARD_BACK){
+			drawCardBackPercent(canvas, percentX, percentY);
+		}else{
+			if(cardFaces != null){
+				destRect.left = (int) (percentX * screenW);
+				destRect.right = destRect.left + cardWidth;
+				destRect.top = (int) (percentY * screenH);
+				destRect.bottom = destRect.top + cardHeight;
+				srcRect.left = ref.getRankNum() * cardWidth;
+				srcRect.right = srcRect.left + cardWidth;
+				srcRect.top = ref.getSuitNum() * cardHeight;
+				srcRect.bottom = srcRect.top + cardHeight;
+				canvas.drawBitmap(cardFaces, srcRect, destRect, null);
+			}
 		}
 	}
 	public void drawCard(Canvas canvas, CardRef ref, int x, int y){
-		if(cardFaces != null){
-			destRect.left = x;
-			destRect.right = x + cardWidth;
-			destRect.top = y;
-			destRect.bottom = y + cardHeight;
-			srcRect.left = ref.getRankNum() * cardWidth;
-			srcRect.right = srcRect.left + cardWidth;
-			srcRect.top = ref.getSuitNum() * cardHeight;
-			srcRect.bottom = srcRect.top + cardHeight;
-			canvas.drawBitmap(cardFaces, srcRect, destRect, null);
+		if(ref == CardRef.CARD_BACK){
+			drawCardBack(canvas, x, y);
+		}else{
+			if(cardFaces != null){
+				destRect.left = x;
+				destRect.right = x + cardWidth;
+				destRect.top = y;
+				destRect.bottom = y + cardHeight;
+				srcRect.left = ref.getRankNum() * cardWidth;
+				srcRect.right = srcRect.left + cardWidth;
+				srcRect.top = ref.getSuitNum() * cardHeight;
+				srcRect.bottom = srcRect.top + cardHeight;
+				canvas.drawBitmap(cardFaces, srcRect, destRect, null);
+			}
 		}
 	}
 

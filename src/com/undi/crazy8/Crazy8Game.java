@@ -106,9 +106,13 @@ public class Crazy8Game {
 		return false;
 	}
 	
+	public CardRef getComputerPlay(){
+		return computerPlayer.selectPlay(oppHand);
+	}
+	
 	public void runComputerTurn(){
 		if(!playerTurn){
-			CardRef picked = computerPlayer.selectPlay(oppHand);
+			CardRef picked = getComputerPlay();
 			if(picked != null){
 				playCard(oppHand, picked);
 				if(picked.rank == Rank.EIGHT){
@@ -125,9 +129,6 @@ public class Crazy8Game {
 	
 	public void changeTurn(){
 		playerTurn = !playerTurn;
-		if(!playerTurn && !isGameOver()){
-			runComputerTurn();
-		}
 	}
 	
 	public boolean playCard(List<CardRef> hand, CardRef card){

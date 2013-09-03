@@ -5,6 +5,9 @@ public class CardRef {
 	public enum Rank {ACE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING};
 	public final Suit suit;
 	public final Rank rank;
+	
+	public static final CardRef CARD_BACK = null;
+
 	public CardRef(Suit suit, Rank rank){
 		this.suit = suit;
 		this.rank = rank;
