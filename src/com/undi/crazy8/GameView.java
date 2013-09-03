@@ -63,6 +63,9 @@ public class GameView extends View {
 		
 		game = new Crazy8Game(context);
 		game.startGame();
+		if(!game.isPlayerTurn()){
+			showComputerTurn();
+		}
 		//Testing code for win dialog
 		//CardMgr.reshuffle(game.getDeck(), game.getOppHand());
 		//CardMgr.reshuffle(game.getDeck(), game.getPlayerHand());
@@ -267,6 +270,25 @@ public class GameView extends View {
 		}
 		invalidate();
 	}
+	
+	private void animateMovingCardBack(int x, int y){
+		CardRef card = game.getPlayerHand().get(movingCardIdx);
+		animateMovingCardBack(card, x, y);
+	}
+	private void animateMovingCardBack(CardRef card, int x, int y){
+		//Move the moving card graphic off screen
+		movingCardX = -1000;
+		Point to = new Point(getPlayerCardDrawX(movingCardIdx),
+				getPlayerCardDrawY());
+		cardGraphic.animateCard(card, new Point(x, y), to, 100,
+				new Runnable() {
+			@Override
+			public void run() {
+				movingCardIdx = -1;
+				invalidate();
+			}
+		});
+	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent evt){
@@ -308,19 +330,10 @@ public class GameView extends View {
 								showChooseSuitDialog();
 							}
 						}else{
-							//Move the moving card graphic off screen
-							movingCardX = -1000;
-							Point to = new Point(getPlayerCardDrawX(movingCardIdx),
-										getPlayerCardDrawY());
-							cardGraphic.animateCard(card, new Point(x, y), to, 100,
-									new Runnable() {
-										@Override
-										public void run() {
-											movingCardIdx = -1;
-											invalidate();
-										}
-									});
+							animateMovingCardBack(card, x, y);
 						}
+					}else{
+						animateMovingCardBack(x, y);
 					}
 				}
 				nextCardButton.checkReleased(x, y);

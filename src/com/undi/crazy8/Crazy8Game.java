@@ -53,9 +53,6 @@ public class Crazy8Game {
 		}
 		
 		playerTurn = new Random().nextBoolean();
-		if(!playerTurn){
-			runComputerTurn();
-		}
 	}
 	
 	public int scoreCard(CardRef card){
