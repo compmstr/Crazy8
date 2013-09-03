@@ -125,7 +125,7 @@ public class Crazy8Game {
 	
 	public void changeTurn(){
 		playerTurn = !playerTurn;
-		if(!playerTurn){
+		if(!playerTurn && !isGameOver()){
 			runComputerTurn();
 		}
 	}
