@@ -1,17 +1,33 @@
 package com.undi.crazy8;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.undi.crazy8.CardRef.Rank;
+import com.undi.crazy8.ui.UIButton;
+import com.undi.crazy8.ui.UICallback;
+
+import android.app.Dialog;
 import android.content.Context;
+import android.content.pm.FeatureInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 public class GameView extends View {
 	private CardGraphic cardGraphic;
+	private UIButton nextCardButton;
 	private Context context;
 	private float scale;
 	private Paint whitePaint;
@@ -19,6 +35,7 @@ public class GameView extends View {
 	private int screenH, screenW;
 	private int movingCardIdx = -1;
 	private int movingCardX, movingCardY;
+	Dialog endHandDialog = null;
 	
 	public GameView(Context context) {
 		super(context);
@@ -33,15 +50,27 @@ public class GameView extends View {
 		//Set to roughly 15pt font, scaled for the screen
 		whitePaint.setTextSize(scale * 15);
 		
-		game = new Crazy8Game();
+		Bitmap nextCardGraphic = BitmapFactory.decodeResource(getResources(), R.drawable.next_button);
+		nextCardButton = new UIButton(nextCardGraphic, 0.8, 0.8, 0.1, screenW, screenH, new UICallback() {
+			@Override
+			public void run(Object... args) {
+				//Rotate the cards in the player's hand
+				Collections.rotate(game.getPlayerHand(), 1);
+			}
+		});
+		
+		game = new Crazy8Game(context);
 		game.startGame();
+		//Testing code for win dialog
+		//CardMgr.reshuffle(game.getDeck(), game.getOppHand());
+		//CardMgr.reshuffle(game.getDeck(), game.getPlayerHand());
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas){
 		canvas.drawText("Player Score: " + Integer.toString(game.getPlayerScore()), 10, 
 				screenH - whitePaint.getTextSize() - 10 , whitePaint);
-		canvas.drawText("Computer Score: " + Integer.toString(game.getPlayerScore()), 10, 
+		canvas.drawText("Computer Score: " + Integer.toString(game.getOppScore()), 10, 
 				whitePaint.getTextSize() + 10 , whitePaint);
 		
 		//draw the player's hand
@@ -56,6 +85,10 @@ public class GameView extends View {
 			}
 			drawX += cardGraphic.getCardWidth() + 5;
 		}
+		if(playerHand.size() > 7){
+			nextCardButton.draw(canvas);
+		}
+
 		//draw the opponent's hand
 		drawX = 5;
 		drawY = (int) (whitePaint.getTextSize() + (50 * scale));
@@ -91,6 +124,7 @@ public class GameView extends View {
 		if(cardGraphic == null){
 			cardGraphic = CardGraphic.getInstance(this.context, 0.1f);
 		}
+		nextCardButton.rescaleGraphic(w, h);
 		cardGraphic.onResize(w, h);
 		screenH = h;
 		screenW = w;
@@ -115,6 +149,69 @@ public class GameView extends View {
 		}
 		return -1;
 	}
+	
+	private void showChooseSuitDialog(){
+		final Dialog chooseSuitDialog = new Dialog(context);
+		chooseSuitDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		chooseSuitDialog.setContentView(R.layout.choose_suit_dialog);
+		final Spinner suitSpinner = (Spinner) chooseSuitDialog.findViewById(R.id.suitSpinner);
+		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(context, R.array.suits, 
+				android.R.layout.simple_spinner_dropdown_item);
+		suitSpinner.setAdapter(adapter);
+		Button okButton = (Button) chooseSuitDialog.findViewById(R.id.okButton);
+		okButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				CharSequence selectedSuitName = (CharSequence)suitSpinner.getSelectedItem();
+				CardRef.Suit selectedSuit = null;
+				try{
+					selectedSuit = CardRef.Suit.valueOf(CardRef.Suit.class, selectedSuitName.toString().toUpperCase());
+				}catch(IllegalArgumentException e){ }
+				if(selectedSuit != null){
+					chooseSuitDialog.dismiss();
+					Toast.makeText(context, "You Chose: " + selectedSuit.toString(), Toast.LENGTH_SHORT).show();
+					game.setWildSuit(selectedSuit);
+				}else{
+					Toast.makeText(context, "Error selecting suit... " + selectedSuitName.toString(), Toast.LENGTH_SHORT).show();
+				}
+			}
+		});
+		chooseSuitDialog.show();
+	}
+	
+	public boolean isNearCenter(int x, int y){
+		int dropRadius = (int) (100 * scale);
+		int screenHalfW = screenW / 2;
+		int screenHalfH = screenH / 2;
+		return(x > screenHalfW - dropRadius &&
+				x < screenHalfW + dropRadius &&
+				y > screenHalfH - dropRadius &&
+				y < screenHalfH + dropRadius);
+	}
+	
+	private void endHand(){
+		endHandDialog = new Dialog(context);
+		endHandDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+		endHandDialog.setContentView(R.layout.end_hand_dialog);
+		TextView endHandText = (TextView) endHandDialog.findViewById(R.id.endHandText);
+		int pointsThisHand = game.updateScores();
+		if(game.getPlayerHand().isEmpty()){
+			endHandText.setText("You went out and were awarded: " + pointsThisHand + " points!");
+		}else{
+			endHandText.setText("The computer won and was awarded: " + pointsThisHand + " points!");
+		}
+		Button nextHandButton = (Button) endHandDialog.findViewById(R.id.nextHandButton);
+		nextHandButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				game.startGame();
+				endHandDialog.dismiss();
+				endHandDialog = null;
+				postInvalidate();
+			}
+		});
+		endHandDialog.show();
+	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent evt){
@@ -124,19 +221,44 @@ public class GameView extends View {
 		
 		switch(eventAction){
 		case MotionEvent.ACTION_DOWN:
+			nextCardButton.checkPressed(x, y);
 			if(game.isPlayerTurn()){
 				movingCardIdx = playerCardAtLocation(x, y);
 				movingCardX = x;
 				movingCardY = y;
+				if(isNearCenter(x, y)){
+					if(game.hasValidMove(game.getPlayerHand())){
+						Toast.makeText(context, "You cannot draw if you have a valid move", Toast.LENGTH_SHORT).show();
+					}else{
+						game.drawCard(game.getPlayerHand());
+						game.changeTurn();
+					}
+				}
 			}
 			break;
 		case MotionEvent.ACTION_MOVE:
 			movingCardX = x;
 			movingCardY = y;
+			nextCardButton.checkPressed(x, y);
 			break;
 		case MotionEvent.ACTION_UP:
+			if(game.isPlayerTurn()){
+				if(isNearCenter(x, y) && movingCardIdx != -1){
+					CardRef card = game.getPlayerHand().get(movingCardIdx);
+					if(game.playCard(game.getPlayerHand(), card)){
+						//move successful
+						if(card.rank == Rank.EIGHT){
+							showChooseSuitDialog();
+						}
+					}
+				}
+			}
+			nextCardButton.checkReleased(x, y);
 			movingCardIdx = -1;
 			break;
+		}
+		if(game.isGameOver() && endHandDialog == null){
+			endHand();
 		}
 		
 		invalidate();

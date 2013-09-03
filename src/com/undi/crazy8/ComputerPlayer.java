@@ -4,6 +4,12 @@ import java.util.List;
 import java.util.Random;
 
 public class ComputerPlayer {
+	
+	Crazy8Game game;
+	
+	public ComputerPlayer(Crazy8Game game){
+		this.game = game;
+	}
 
 	/**
 	 * Select a play to make
@@ -11,9 +17,9 @@ public class ComputerPlayer {
 	 * @param topOfDiscard
 	 * @return the card to play, or null if no valid play
 	 */
-	public static CardRef selectPlay(List<CardRef> hand, CardRef topOfDiscard){
+	public CardRef selectPlay(List<CardRef> hand){
 		for(CardRef card: hand){
-			if(Crazy8Game.isValidMove(card, topOfDiscard)){
+			if(game.isValidMove(card)){
 				return card;
 			}
 		}

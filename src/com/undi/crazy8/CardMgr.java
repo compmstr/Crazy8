@@ -31,7 +31,7 @@ public class CardMgr {
 			return false;
 		}
 		for(int i = 0; i < count; i++){
-			to.add(from.remove(0));
+			to.add(0, from.remove(0));
 		}
 		return true;
 	}
