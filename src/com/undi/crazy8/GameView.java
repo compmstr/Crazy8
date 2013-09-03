@@ -304,7 +304,7 @@ public class GameView extends View {
 						CardRef card = game.getPlayerHand().get(movingCardIdx);
 						if(game.playCard(game.getPlayerHand(), card)){
 							//move successful
-							if(card.rank == Rank.EIGHT){
+							if(card.rank == Rank.EIGHT && !game.isGameOver()){
 								showChooseSuitDialog();
 							}
 						}else{

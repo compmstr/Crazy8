@@ -115,7 +115,7 @@ public class Crazy8Game {
 			CardRef picked = getComputerPlay();
 			if(picked != null){
 				playCard(oppHand, picked);
-				if(picked.rank == Rank.EIGHT){
+				if(picked.rank == Rank.EIGHT && !isGameOver()){
 					Suit selectedSuit = computerPlayer.chooseSuit(oppHand);
 					setWildSuit(selectedSuit);
 					Toast.makeText(context, "The Computer Chose: " + selectedSuit.toString(), Toast.LENGTH_SHORT).show();
