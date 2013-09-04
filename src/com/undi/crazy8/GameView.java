@@ -30,7 +30,7 @@ public class GameView extends View {
 	private Context context;
 	private float scale;
 	private Paint whitePaint;
-	private Crazy8Game game;
+	private Game game;
 	private int screenH, screenW;
 	private int movingCardIdx = -1;
 	private int movingCardX, movingCardY;
@@ -61,14 +61,11 @@ public class GameView extends View {
 			}
 		});
 		
-		game = new Crazy8Game(context);
+		game = new Game(context);
 		game.startGame();
 		if(!game.isPlayerTurn()){
 			showComputerTurn();
 		}
-		//Testing code for win dialog
-		//CardMgr.reshuffle(game.getDeck(), game.getOppHand());
-		//CardMgr.reshuffle(game.getDeck(), game.getPlayerHand());
 	}
 	
 	private int getPlayerCardDrawX(int idx){
@@ -254,21 +251,26 @@ public class GameView extends View {
 	 *   doComputerTurn
 	 */
 	private void showComputerTurn(){
-		CardRef computerCard = game.getComputerPlay();
-		if(computerCard != null){
-			//Show computer playing card
-			cardGraphic.animateCardBack(
-					new Point(getOpponentCardDrawX(), getOpponentCardDrawY()),
-					new Point(screenW / 2, screenH / 2),
-					200, doComputerTurn);
-		}else{
-			//Show computer drawing card
-			cardGraphic.animateCardBack(
-					new Point(screenW / 2, screenH / 2),
-					new Point(getOpponentCardDrawX(), getOpponentCardDrawY()),
-					200, doComputerTurn);
+		showComputerTurn(true);
+	}
+	private void showComputerTurn(boolean checkAnim){
+		if(!checkAnim || !cardGraphic.isAnimationRunning()){
+			CardRef computerCard = game.getComputerPlay();
+			if(computerCard != null){
+				//Show computer playing card
+				cardGraphic.animateCardBack(
+						new Point(getOpponentCardDrawX(), getOpponentCardDrawY()),
+						new Point(screenW / 2, screenH / 2),
+						200, doComputerTurn);
+			}else{
+				//Show computer drawing card
+				cardGraphic.animateCardBack(
+						new Point(screenW / 2, screenH / 2),
+						new Point(getOpponentCardDrawX(), getOpponentCardDrawY()),
+						200, doComputerTurn);
+			}
+			invalidate();
 		}
-		invalidate();
 	}
 	
 	private void animateMovingCardBack(int x, int y){
@@ -285,6 +287,21 @@ public class GameView extends View {
 			@Override
 			public void run() {
 				movingCardIdx = -1;
+				invalidate();
+			}
+		});
+	}
+	
+	private void animateDrawCard(){
+		Point to = new Point(getPlayerCardDrawX(0), getPlayerCardDrawY());
+		Point from = new Point(screenW / 2, screenH / 2);
+		cardGraphic.animateCardBack(from, to, 100, new Runnable() {
+			@Override
+			public void run() {
+				game.drawCard(game.getPlayerHand());
+				game.changeTurn();
+				//Since player is drawing, we know game isn't over, and not picking a suit
+				showComputerTurn(false);
 				invalidate();
 			}
 		});
@@ -309,8 +326,7 @@ public class GameView extends View {
 						if(game.hasValidMove(game.getPlayerHand())){
 							Toast.makeText(context, "You cannot draw if you have a valid move", Toast.LENGTH_SHORT).show();
 						}else{
-							game.drawCard(game.getPlayerHand());
-							game.changeTurn();
+							animateDrawCard();
 						}
 					}
 				}

@@ -12,10 +12,12 @@ import android.view.View;
 public class AnimatedCardGraphic extends CardGraphic {
 	
 	List<CardAnimation> anims;
+	List<Runnable> pendingCallbacks;
 
 	public AnimatedCardGraphic(Context context, float cardWidthPercent) {
 		super(context, cardWidthPercent);
 		anims = new LinkedList<CardAnimation>();
+		pendingCallbacks = new LinkedList<Runnable>();
 	}
 	
 
@@ -38,13 +40,20 @@ public class AnimatedCardGraphic extends CardGraphic {
 			if(where == null){
 				Runnable callback = anim.getCallback();
 				if(callback != null){
-					callback.run();
+					pendingCallbacks.add(callback);
 				}
 				iter.remove();
 			}else{
 				CardRef card = anim.getCard();
 				drawCard(canvas, card, where.x, where.y);
 			}
+		}
+		//We have to run callbacks separately so that the callbacks can
+		//  add animations if needed, without coming up with a ConcurrentModificationException
+		Iterator<Runnable> callbackIter = pendingCallbacks.iterator();
+		while(callbackIter.hasNext()){ 
+			callbackIter.next().run(); 
+			callbackIter.remove();
 		}
 		if(isAnimationRunning()){
 			view.postInvalidate();

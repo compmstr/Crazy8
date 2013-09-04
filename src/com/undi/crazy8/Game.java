@@ -10,7 +10,7 @@ import android.widget.Toast;
 import com.undi.crazy8.CardRef.Rank;
 import com.undi.crazy8.CardRef.Suit;
 
-public class Crazy8Game {
+public class Game {
 	private List<CardRef> deck;
 	private List<CardRef> playerHand;
 	private List<CardRef> oppHand;
@@ -26,7 +26,7 @@ public class Crazy8Game {
 	
 	private boolean playerTurn;
 	
-	public Crazy8Game(Context context){
+	public Game(Context context){
 		deck = CardMgr.getShuffledDeck();
 		playerHand = new LinkedList<CardRef>();
 		oppHand = new LinkedList<CardRef>();

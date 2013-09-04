@@ -12,9 +12,9 @@ import com.undi.crazy8.CardRef.Suit;
 
 public class ComputerPlayer {
 	
-	Crazy8Game game;
+	Game game;
 	
-	public ComputerPlayer(Crazy8Game game){
+	public ComputerPlayer(Game game){
 		this.game = game;
 	}
 
