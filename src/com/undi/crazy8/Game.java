@@ -171,6 +171,7 @@ public class Game {
 	public List<CardRef> getOppHand() { return oppHand; }
 	public List<CardRef> getDiscardPile() { return discardPile; }
 	public CardRef getTopOfDiscard() { return discardPile.get(0); }
+	public Suit getWildSuit(){ return wildSuit; }
 	
 	public void setWildSuit(CardRef.Suit suit){ wildSuit = suit ;}
 	

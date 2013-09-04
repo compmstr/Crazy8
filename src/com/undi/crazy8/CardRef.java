@@ -13,6 +13,10 @@ public class CardRef {
 		this.rank = rank;
 	}
 	
+	public static String suitProperCaseName(Suit suit){
+		return suit.name().substring(0, 1) + suit.name().substring(1).toLowerCase();
+	}
+	
 	public int getSuitNum(){
 		return suit.ordinal();
 	}

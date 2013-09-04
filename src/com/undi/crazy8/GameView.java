@@ -124,6 +124,15 @@ public class GameView extends View {
 			cardGraphic.drawCard(canvas, game.getDiscardPile().get(0), drawX, drawY);
 		}
 		
+		//Draw the wild suit
+		if(game.getTopOfDiscard().rank == Rank.EIGHT &&
+				game.getWildSuit() != null){
+			drawX = (screenW / 2) + 10 + cardGraphic.getCardWidth() + 5;
+			drawY = (screenH / 2);
+			canvas.drawText("Suit: " + CardRef.suitProperCaseName(game.getWildSuit()),
+					drawX, drawY, whitePaint);
+		}
+		
 		//Draw the animations
 		cardGraphic.drawAnimations(canvas, this);
 		
@@ -223,6 +232,9 @@ public class GameView extends View {
 			@Override
 			public void onClick(View v) {
 				game.startGame();
+				if(!game.isPlayerTurn()){
+					showComputerTurn();
+				}
 				endHandDialog.dismiss();
 				endHandDialog = null;
 				postInvalidate();
