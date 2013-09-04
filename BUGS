@@ -1,6 +1,6 @@
-If computer has first turn, doesn't run until screen touched
 
 FIXED:
+If computer has first turn, doesn't run until screen touched
 Still picking suit if going out with an 8
 Need to animate not playing card (not just invalid move)
 Crash when releasing touch when not dragging card
