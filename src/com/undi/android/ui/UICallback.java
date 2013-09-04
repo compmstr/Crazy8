@@ -1,4 +1,4 @@
-package com.undi.crazy8.ui;
+package com.undi.android.ui;
 
 /**
  * Interface for a callback to be used in the interface

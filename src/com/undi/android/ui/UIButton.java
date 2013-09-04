@@ -1,4 +1,4 @@
-package com.undi.crazy8.ui;
+package com.undi.android.ui;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

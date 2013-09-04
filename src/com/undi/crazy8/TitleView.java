@@ -1,7 +1,7 @@
 package com.undi.crazy8;
 
-import com.undi.crazy8.ui.UIButton;
-import com.undi.crazy8.ui.UICallback;
+import com.undi.android.ui.UIButton;
+import com.undi.android.ui.UICallback;
 
 import android.annotation.TargetApi;
 import android.content.Context;

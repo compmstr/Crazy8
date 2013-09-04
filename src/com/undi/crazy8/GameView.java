@@ -3,9 +3,9 @@ package com.undi.crazy8;
 import java.util.Collections;
 import java.util.List;
 
+import com.undi.android.ui.UIButton;
+import com.undi.android.ui.UICallback;
 import com.undi.crazy8.CardRef.Rank;
-import com.undi.crazy8.ui.UIButton;
-import com.undi.crazy8.ui.UICallback;
 
 import android.app.Dialog;
 import android.content.Context;
